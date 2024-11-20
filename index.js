@@ -3,7 +3,7 @@ const puppeteer = require("puppeteer-extra");
 const StealthPlugin = require("puppeteer-extra-plugin-stealth");
 const cors = require("cors");
 
-// Add Stealth Plugin
+// Add Puppeteer Stealth Plugin
 puppeteer.use(StealthPlugin());
 
 const app = express();
@@ -19,12 +19,12 @@ app.use(express.json());
 app.get("/", (req, res) => {
   res.status(200).json({
     status: "success",
-    message: "Stinger is running with enhanced evasion!",
+    message: "Puppeteer Title Fetcher is running!",
   });
 });
 
-// Route to fetch HTML
-app.get("/render", async (req, res) => {
+// Route to fetch page title
+app.get("/fetch-title", async (req, res) => {
   const url = req.query.url;
 
   if (!url) {
@@ -34,13 +34,8 @@ app.get("/render", async (req, res) => {
   try {
     // Launch Puppeteer browser with stealth plugin
     const browser = await puppeteer.launch({
-      args: [
-        "--no-sandbox",
-        "--disable-setuid-sandbox",
-        "--disable-dev-shm-usage",
-        "--disable-blink-features=AutomationControlled",
-      ],
-      headless: true, // Set to false for debugging
+      args: ["--no-sandbox", "--disable-setuid-sandbox"],
+      headless: true,
     });
 
     const page = await browser.newPage();
@@ -53,25 +48,20 @@ app.get("/render", async (req, res) => {
       "Accept-Language": "en-US,en;q=0.9",
     });
 
-    // Go to the provided URL
-    await page.goto(url, {
-      waitUntil: "networkidle2", // Wait for all network requests to finish
-    });
+    // Navigate to the provided URL
+    await page.goto(url, { waitUntil: "networkidle2" });
 
-    // Wait for the full page to load
-    await page.waitForTimeout(3000); // Additional wait time to simulate human-like behavior
-
-    // Get the full HTML of the page
-    const html = await page.content();
+    // Extract the page title
+    const title = await page.title();
 
     // Close the browser
     await browser.close();
 
-    // Return the HTML
-    res.status(200).json({ html });
+    // Return the title
+    res.status(200).json({ title });
   } catch (error) {
-    console.error("Error fetching HTML:", error.message);
-    res.status(500).json({ error: "Failed to fetch HTML" });
+    console.error("Error fetching title:", error.message);
+    res.status(500).json({ error: "Failed to fetch title" });
   }
 });
 
